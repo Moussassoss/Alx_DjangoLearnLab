@@ -106,6 +106,34 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+
+# SECURITY SETTINGS
+
+# Disable debug in production
+DEBUG = False
+
+# Browser XSS protection
+SECURE_BROWSER_XSS_FILTER = True
+
+# Clickjacking protection
+X_FRAME_OPTIONS = 'DENY'
+
+# Prevent content type sniffing
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Force secure cookies (HTTPS only)
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Recommended: HSTS for HTTPS (if using HTTPS)
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+
+# Redirect all HTTP to HTTPS
+SECURE_SSL_REDIRECT = True
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
