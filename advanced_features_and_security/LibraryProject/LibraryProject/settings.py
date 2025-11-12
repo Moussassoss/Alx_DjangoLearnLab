@@ -133,6 +133,14 @@ SECURE_HSTS_PRELOAD = True
 # Redirect all HTTP to HTTPS
 SECURE_SSL_REDIRECT = True
 
+# -------------------------------
+# HTTPS / Proxy Settings
+# -------------------------------
+
+# Tell Django the original protocol header when behind a proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
