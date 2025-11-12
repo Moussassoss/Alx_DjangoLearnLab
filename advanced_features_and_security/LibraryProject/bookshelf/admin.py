@@ -3,7 +3,6 @@ from django.contrib.auth.admin import UserAdmin
 from .models import Book, CustomUser
 
 # --- Custom User Admin ---
-@admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     list_display = ('username', 'email', 'first_name', 'last_name', 'date_of_birth', 'is_staff')
@@ -13,6 +12,9 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         (None, {'fields': ('date_of_birth', 'profile_photo')}),
     )
+
+# Register using admin.site.register
+admin.site.register(CustomUser, CustomUserAdmin)
 
 # --- Book Admin ---
 @admin.register(Book)
