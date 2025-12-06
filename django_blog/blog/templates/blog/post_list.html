@@ -1,0 +1,45 @@
+{% extends "blog/base.html" %}
+{% load static %}
+
+{% block title %}Posts{% endblock %}
+
+{% block content %}
+<h2>Posts</h2>
+
+{% for post in posts %}
+  <article>
+    <h3>
+      <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+    </h3>
+
+    <p>By {{ post.author.username }} — {{ post.published_date }}</p>
+
+    <p>{{ post.content|truncatewords:30 }}</p>
+
+    <p>Tags:
+      {% for tag in post.tags.all %}
+        <a href="{% url 'blog:post_list' %}?tag={{ tag.name }}">{{ tag.name }}</a>
+        {% if not forloop.last %}, {% endif %}
+      {% empty %}
+        no tags
+      {% endfor %}
+    </p>
+  </article>
+{% empty %}
+  <p>No posts yet.</p>
+{% endfor %}
+
+{% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}
