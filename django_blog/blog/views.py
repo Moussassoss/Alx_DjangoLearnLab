@@ -1,14 +1,20 @@
 # blog/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from .models import Post, Comment, Tag
-from .forms import PostForm, CommentForm, UserRegisterForm, ProfileForm
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.http import HttpResponseForbidden
 from django.db.models import Q
 
-# Post list with simple search
+from .models import Post, Comment, Tag
+from .forms import PostForm, CommentForm, UserRegisterForm, ProfileForm
+
+# -----------------------------
+# Post Views
+# -----------------------------
+
 class PostListView(ListView):
     model = Post
     template_name = 'blog/post_list.html'
@@ -25,6 +31,7 @@ class PostListView(ListView):
             qs = qs.filter(tags__name__iexact=tag)
         return qs
 
+
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/post_detail.html'
@@ -34,6 +41,7 @@ class PostDetailView(DetailView):
         ctx['comment_form'] = CommentForm()
         return ctx
 
+
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
@@ -41,8 +49,8 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        response = super().form_valid(form)
-        return response
+        return super().form_valid(form)
+
 
 class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
@@ -53,6 +61,7 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         post = self.get_object()
         return post.author == self.request.user
 
+
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     template_name = 'blog/post_confirm_delete.html'
@@ -62,47 +71,51 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         post = self.get_object()
         return post.author == self.request.user
 
-# Comment create, edit, delete as simple function views (keeps templates easy)
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+# -----------------------------
+# Comment Views (class-based)
+# -----------------------------
 
-@login_required
-def add_comment(request, post_pk):
-    post = get_object_or_404(Post, pk=post_pk)
-    if request.method == "POST":
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.post = post
-            comment.author = request.user
-            comment.save()
-    return redirect(post.get_absolute_url())
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/add_comment.html'
 
-@login_required
-def edit_comment(request, comment_pk):
-    comment = get_object_or_404(Comment, pk=comment_pk)
-    if comment.author != request.user:
-        return HttpResponseForbidden()
-    if request.method == "POST":
-        form = CommentForm(request.POST, instance=comment)
-        if form.is_valid():
-            form.save()
-            return redirect(comment.post.get_absolute_url())
-    else:
-        form = CommentForm(instance=comment)
-    return render(request, 'blog/comment_edit.html', {'form': form, 'comment': comment})
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.post_id = self.kwargs['post_pk']
+        return super().form_valid(form)
 
-@login_required
-def delete_comment(request, comment_pk):
-    comment = get_object_or_404(Comment, pk=comment_pk)
-    if comment.author != request.user:
-        return HttpResponseForbidden()
-    post = comment.post
-    comment.delete()
-    return redirect(post.get_absolute_url())
+    def get_success_url(self):
+        return self.object.post.get_absolute_url()
 
-# Auth views: registration and profile
-from django.views import View
+
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/edit_comment.html'
+
+    def test_func(self):
+        comment = self.get_object()
+        return comment.author == self.request.user
+
+    def get_success_url(self):
+        return self.object.post.get_absolute_url()
+
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    template_name = 'blog/delete_comment.html'
+
+    def test_func(self):
+        comment = self.get_object()
+        return comment.author == self.request.user
+
+    def get_success_url(self):
+        return self.object.post.get_absolute_url()
+
+# -----------------------------
+# Auth Views
+# -----------------------------
 
 class RegisterView(FormView):
     template_name = 'blog/register.html'
@@ -113,6 +126,7 @@ class RegisterView(FormView):
         user = form.save()
         login(self.request, user)
         return super().form_valid(form)
+
 
 class ProfileView(LoginRequiredMixin, View):
     template_name = 'blog/profile.html'
