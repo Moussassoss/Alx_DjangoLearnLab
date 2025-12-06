@@ -1,11 +1,9 @@
 # blog/views.py
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, View
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
-from django.http import HttpResponseForbidden
 from django.db.models import Q
 
 from .models import Post, Comment, Tag
@@ -22,13 +20,20 @@ class PostListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        qs = super().get_queryset()
+        qs = Post.objects.all()
         q = self.request.GET.get('q')
         tag = self.request.GET.get('tag')
+
         if q:
-            qs = qs.filter(Q(title__icontains=q) | Q(content__icontains=q) | Q(author__username__icontains=q)).distinct()
+            qs = Post.objects.filter(
+                Q(title__icontains=q) |
+                Q(content__icontains=q) |
+                Q(author__username__icontains=q)
+            ).distinct()
+
         if tag:
-            qs = qs.filter(tags__name__iexact=tag)
+            qs = qs.filter(tags__name__icontains=tag)
+
         return qs
 
 
