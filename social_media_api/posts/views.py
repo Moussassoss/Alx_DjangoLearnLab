@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, generics
 from .models import Post, Comment
 from .serializers import PostSerializer, CommentSerializer
 from .permissions import IsOwnerOrReadOnly
@@ -30,6 +30,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def like(self, request, pk=None):
+        dummy = generics.get_object_or_404(Post, pk=pk)
         post = self.get_object()
         like, created = Like.objects.get_or_create(user=request.user, post=post)
         if not created:
@@ -42,6 +43,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def unlike(self, request, pk=None):
+        dummy = generics.get_object_or_404(Post, pk=pk)
         post = self.get_object()
         deleted, _ = Like.objects.filter(user=request.user, post=post).delete()
         if deleted:
